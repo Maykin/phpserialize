@@ -350,40 +350,40 @@ def dumps(data, charset='utf-8', errors=default_errors, object_hook=None):
     def _serialize(obj, keypos):
         if keypos:
             if isinstance(obj, (int, long, float, bool)):
-                return ('i:%i;' % obj).encode('latin1')
+                return (u'i:%i;' % obj).encode('latin1')
             if isinstance(obj, basestring):
                 encoded_obj = obj
                 if isinstance(obj, unicode):
                     encoded_obj = obj.encode(charset, errors)
                 s = BytesIO()
-                s.write(b's:')
-                s.write(str(len(encoded_obj)).encode('latin1'))
-                s.write(b':"')
+                s.write('s:')
+                s.write(unicode(len(encoded_obj)).encode('latin1'))
+                s.write(':"')
                 s.write(encoded_obj)
-                s.write(b'";')
+                s.write('";')
                 return s.getvalue()
             if obj is None:
-                return b's:0:"";'
+                return 's:0:"";'
             raise TypeError('can\'t serialize %r as key' % type(obj))
         else:
             if obj is None:
-                return b'N;'
+                return 'N;'
             if isinstance(obj, bool):
-                return ('b:%i;' % obj).encode('latin1')
+                return (u'b:%i;' % obj).encode('latin1')
             if isinstance(obj, (int, long)):
-                return ('i:%s;' % obj).encode('latin1')
+                return (u'i:%s;' % obj).encode('latin1')
             if isinstance(obj, float):
-                return ('d:%s;' % obj).encode('latin1')
+                return (u'd:%s;' % obj).encode('latin1')
             if isinstance(obj, basestring):
                 encoded_obj = obj
                 if isinstance(obj, unicode):
                     encoded_obj = obj.encode(charset, errors)
                 s = BytesIO()
-                s.write(b's:')
-                s.write(str(len(encoded_obj)).encode('latin1'))
-                s.write(b':"')
+                s.write('s:')
+                s.write(unicode(len(encoded_obj)).encode('latin1'))
+                s.write(':"')
                 s.write(encoded_obj)
-                s.write(b'";')
+                s.write('";')
                 return s.getvalue()
             if isinstance(obj, (list, tuple, dict)):
                 out = []
@@ -394,15 +394,15 @@ def dumps(data, charset='utf-8', errors=default_errors, object_hook=None):
                 for key, value in iterable:
                     out.append(_serialize(key, True))
                     out.append(_serialize(value, False))
-                return b''.join([
-                    b'a:',
-                    str(len(obj)).encode('latin1'),
-                    b':{',
-                    b''.join(out),
-                    b'}'
+                return ''.join([
+                    'a:',
+                    unicode(len(obj)).encode('latin1'),
+                    ':{',
+                    ''.join(out),
+                    '}'
                 ])
             if isinstance(obj, phpobject):
-                return b'O' + _serialize(obj.__name__, True)[1:-1] + \
+                return 'O' + _serialize(obj.__name__, True)[1:-1] + \
                        _serialize(obj.__php_vars__, False)[1:]
             if object_hook is not None:
                 return _serialize(object_hook(obj), False)
@@ -452,11 +452,11 @@ def load(fp, charset='utf-8', errors=default_errors, decode_strings=False,
             elif not char:
                 raise ValueError('unexpected end of stream')
             buf.append(char)
-        return b''.join(buf)
+        return ''.join(buf)
 
     def _load_array():
-        items = int(_read_until(b':')) * 2
-        _expect(b'{')
+        items = int(_read_until(':')) * 2
+        _expect('{')
         result = []
         last_item = Ellipsis
         for idx in xrange(items):
@@ -466,44 +466,44 @@ def load(fp, charset='utf-8', errors=default_errors, decode_strings=False,
             else:
                 result.append((last_item, item))
                 last_item = Ellipsis
-        _expect(b'}')
+        _expect('}')
         return result
 
     def _unserialize():
         type_ = fp.read(1).lower()
-        if type_ == b'n':
-            _expect(b';')
+        if type_ == 'n':
+            _expect(';')
             return None
-        if type_ in b'idb':
-            _expect(b':')
-            data = _read_until(b';')
-            if type_ == b'i':
+        if type_ in 'idb':
+            _expect(':')
+            data = _read_until(';')
+            if type_ == 'i':
                 return int(data)
-            if type_ == b'd':
+            if type_ == 'd':
                 return float(data)
             return int(data) != 0
-        if type_ == b's':
-            _expect(b':')
-            length = int(_read_until(b':'))
-            _expect(b'"')
+        if type_ == 's':
+            _expect(':')
+            length = int(_read_until(':'))
+            _expect('"')
             data = fp.read(length)
-            _expect(b'"')
+            _expect('"')
             if decode_strings:
                 data = data.decode(charset, errors)
-            _expect(b';')
+            _expect(';')
             return data
-        if type_ == b'a':
-            _expect(b':')
+        if type_ == 'a':
+            _expect(':')
             return array_hook(_load_array())
-        if type_ == b'o':
+        if type_ == 'o':
             if object_hook is None:
                 raise ValueError('object in serialization dump but '
                                  'object_hook not given.')
-            _expect(b':')
-            name_length = int(_read_until(b':'))
-            _expect(b'"')
+            _expect(':')
+            name_length = int(_read_until(':'))
+            _expect('"')
             name = fp.read(name_length)
-            _expect(b'":')
+            _expect('":')
             if decode_strings:
                 name = name.decode(charset, errors)
             return object_hook(name, dict(_load_array()))

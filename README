@@ -1,3 +1,1 @@
-a port of the serialize and unserialize functions of php to python. This module
-implements the python serialization interface (eg: provides dumps, loads and
-similar functions).
+WARNING: This is our fork for python 2.5 compatability for an old project that interfaces with php. Don't use this version!!
